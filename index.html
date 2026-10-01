@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <meta
+        name="description"
+        content="What If Earth — Global Simulation Lab"
+    >
+
+    <title>What If Earth — Global Simulation Lab</title>
+
+    <!-- D3 -->
+    <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+
+    <!-- TopoJSON -->
+    <script src="https://cdn.jsdelivr.net/npm/topojson-client@3"></script>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <!-- =========================================================
+         TOP BAR
+    ========================================================== -->
+
+    <header class="topbar">
+
+        <div class="brand">
+
+            <div class="brand-icon">
+                ◉
+            </div>
+
+            <div>
+                <div class="brand-title">
+                    WHAT IF EARTH
+                </div>
+
+                <div class="brand-subtitle">
+                    GLOBAL SIMULATION LAB
+                </div>
+            </div>
+
+        </div>
+
+        <div class="system-status">
+
+            <span class="status-dot"></span>
+
+            <span id="systemStatus">
+                SYSTEM READY
+            </span>
+
+        </div>
+
+    </header>
+
+
+    <!-- =========================================================
+         MAIN APPLICATION
+    ========================================================== -->
+
+    <main class="app">
+
+        <!-- =====================================================
+             CONTROL PANEL
+        ====================================================== -->
+
+        <section class="control-panel">
+
+            <div class="section-heading">
+
+                <div>
+                    <div class="eyebrow">
+                        SIMULATION PARAMETERS
+                    </div>
+
+                    <h1>
+                        Change Earth
+                    </h1>
+
+                    <p>
+                        Adjust global variables and observe the
+                        hypothetical consequences.
+                    </p>
+                </div>
+
+            </div>
+
+
+            <!-- TEMPERATURE -->
+
+            <div class="control-group">
+
+                <div class="control-header">
+
+                    <label for="temperature">
+                        Global Temperature
+                    </label>
+
+                    <span
+                        class="control-value"
+                        id="temperatureValue"
+                    >
+                        +0.0°C
+                    </span>
+
+                </div>
+
+                <input
+                    type="range"
+                    id="temperature"
+                    min="-2"
+                    max="6"
+                    step="0.1"
+                    value="0"
+                >
+
+                <div class="range-labels">
+                    <span>-2°C</span>
+                    <span>+6°C</span>
+                </div>
+
+            </div>
+
+
+            <!-- SEA LEVEL -->
+
+            <div class="control-group">
+
+                <div class="control-header">
+
+                    <label for="seaLevel">
+                        Sea Level
+                    </label>
+
+                    <span
+                        class="control-value"
+                        id="seaLevelValue"
+                    >
+                        0.0 m
+                    </span>
+
+                </div>
+
+                <input
+                    type="range"
+                    id="seaLevel"
+                    min="0"
+                    max="5"
+                    step="0.1"
+                    value="0"
+                >
+
+                <div class="range-labels">
+                    <span>0 m</span>
+                    <span>5 m</span>
+                </div>
+
+            </div>
+
+
+            <!-- RAINFALL -->
+
+            <div class="control-group">
+
+                <div class="control-header">
+
+                    <label for="rainfall">
+                        Global Rainfall
+                    </label>
+
+                    <span
+                        class="control-value"
+                        id="rainfallValue"
+                    >
+                        100%
+                    </span>
+
+                </div>
+
+                <input
+                    type="range"
+                    id="rainfall"
+                    min="50"
+                    max="150"
+                    step="1"
+                    value="100"
+                >
+
+                <div class="range-labels">
+                    <span>50%</span>
+                    <span>150%</span>
+                </div>
+
+            </div>
+
+
+            <!-- FOREST -->
+
+            <div class="control-group">
+
+                <div class="control-header">
+
+                    <label for="forest">
+                        Forest Coverage
+                    </label>
+
+                    <span
+                        class="control-value"
+                        id="forestValue"
+                    >
+                        100%
+                    </span>
+
+                </div>
+
+                <input
+                    type="range"
+                    id="forest"
+                    min="25"
+                    max="150"
+                    step="1"
+                    value="100"
+                >
+
+                <div class="range-labels">
+                    <span>25%</span>
+                    <span>150%</span>
+                </div>
+
+            </div>
+
+
+            <!-- POPULATION -->
+
+            <div class="control-group">
+
+                <div class="control-header">
+
+                    <label for="population">
+                        Population
+                    </label>
+
+                    <span
+                        class="control-value"
+                        id="populationValue"
+                    >
+                        8.2B
+                    </span>
+
+                </div>
+
+                <input
+                    type="range"
+                    id="population"
+                    min="1"
+                    max="15"
+                    step="0.1"
+                    value="8.2"
+                >
+
+                <div class="range-labels">
+                    <span>1B</span>
+                    <span>15B</span>
+                </div>
+
+            </div>
+
+
+            <!-- CLEAN ENERGY -->
+
+            <div class="control-group">
+
+                <div class="control-header">
+
+                    <label for="cleanEnergy">
+                        Clean Energy
+                    </label>
+
+                    <span
+                        class="control-value"
+                        id="cleanEnergyValue"
+                    >
+                        30%
+                    </span>
+
+                </div>
+
+                <input
+                    type="range"
+                    id="cleanEnergy"
+                    min="0"
+                    max="100"
+                    step="1"
+                    value="30"
+                >
+
+                <div class="range-labels">
+                    <span>0%</span>
+                    <span>100%</span>
+                </div>
+
+            </div>
+
+
+            <!-- BUTTONS -->
+
+            <div class="button-row">
+
+                <button
+                    id="runSimulation"
+                    class="primary-button"
+                >
+                    <span>▶</span>
+                    Run Simulation
+                </button>
+
+                <button
+                    id="resetSimulation"
+                    class="secondary-button"
+                >
+                    Reset
+                </button>
+
+            </div>
+
+
+            <!-- LIVE SIMULATION STATE -->
+
+            <div class="simulation-state">
+
+                <div class="state-row">
+
+                    <span>
+                        Simulation
+                    </span>
+
+                    <strong id="simulationState">
+                        READY
+                    </strong>
+
+                </div>
+
+                <div class="state-row">
+
+                    <span>
+                        Current Year
+                    </span>
+
+                    <strong id="currentYear">
+                        2026
+                    </strong>
+
+                </div>
+
+                <div class="state-row">
+
+                    <span>
+                        Simulation Time
+                    </span>
+
+                    <strong id="simulationClock">
+                        00:00
+                    </strong>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =====================================================
+             MAIN WORLD VIEW
+        ====================================================== -->
+
+        <section class="world-section">
+
+            <div class="world-header">
+
+                <div>
+
+                    <div class="eyebrow">
+                        PLANETARY VISUALIZATION
+                    </div>
+
+                    <h2>
+                        Earth Simulation
+                    </h2>
+
+                </div>
+
+                <div class="world-controls">
+
+                    <span>
+                        DRAG TO ROTATE
+                    </span>
+
+                    <span>
+                        SCROLL TO ZOOM
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <!-- EARTH -->
+
+            <div class="earth-wrapper">
+
+                <div class="earth-glow"></div>
+
+                <svg
+                    id="earthGlobe"
+                    class="earth"
+                    viewBox="0 0 700 700"
+                    aria-label="Interactive Earth globe"
+                >
+
+                    <defs>
+
+                        <radialGradient
+                            id="oceanGradient"
+                            cx="35%"
+                            cy="30%"
+                            r="75%"
+                        >
+                            <stop
+                                offset="0%"
+                                stop-color="#153b55"
+                            />
+
+                            <stop
+                                offset="55%"
+                                stop-color="#082236"
+                            />
+
+                            <stop
+                                offset="100%"
+                                stop-color="#020b14"
+                            />
+                        </radialGradient>
+
+                        <radialGradient
+                            id="atmosphereGradient"
+                            cx="50%"
+                            cy="50%"
+                            r="50%"
+                        >
+                            <stop
+                                offset="72%"
+                                stop-color="transparent"
+                            />
+
+                            <stop
+                                offset="92%"
+                                stop-color="rgba(85,229,255,0.10)"
+                            />
+
+                            <stop
+                                offset="100%"
+                                stop-color="rgba(85,229,255,0.45)"
+                            />
+                        </radialGradient>
+
+                        <filter
+                            id="globeShadow"
+                            x="-30%"
+                            y="-30%"
+                            width="160%"
+                            height="160%"
+                        >
+
+                            <feDropShadow
+                                dx="0"
+                                dy="12"
+                                stdDeviation="18"
+                                flood-color="#000000"
+                                flood-opacity="0.8"
+                            />
+
+                        </filter>
+
+                        <clipPath id="globeClip">
+
+                            <circle
+                                cx="350"
+                                cy="350"
+                                r="270"
+                            />
+
+                        </clipPath>
+
+                    </defs>
+
+
+                    <!-- OCEAN -->
+
+                    <circle
+                        class="globe-ocean"
+                        cx="350"
+                        cy="350"
+                        r="270"
+                        fill="url(#oceanGradient)"
+                        filter="url(#globeShadow)"
+                    ></circle>
+
+
+                    <!-- MAP -->
+
+                    <g
+                        id="globeMap"
+                        clip-path="url(#globeClip)"
+                    >
+
+                        <g id="graticuleLayer"></g>
+
+                        <g id="landLayer"></g>
+
+                        <g id="climateLayer"></g>
+
+                        <g id="cityLayer"></g>
+
+                    </g>
+
+
+                    <!-- ATMOSPHERE -->
+
+                    <circle
+                        class="globe-atmosphere"
+                        cx="350"
+                        cy="350"
+                        r="270"
+                        fill="url(#atmosphereGradient)"
+                        pointer-events="none"
+                    ></circle>
+
+
+                    <!-- OUTER RING -->
+
+                    <circle
+                        class="globe-ring"
+                        cx="350"
+                        cy="350"
+                        r="270"
+                        fill="none"
+                    ></circle>
+
+                </svg>
+
+                <div class="globe-label north-label">
+                    NORTH
+                </div>
+
+                <div class="globe-label south-label">
+                    SOUTH
+                </div>
+
+                <div class="globe-label east-label">
+                    EAST
+                </div>
+
+                <div class="globe-label west-label">
+                    WEST
+                </div>
+
+            </div>
+
+
+            <!-- BASIC METRICS -->
+
+            <div class="metrics-grid">
+
+                <div class="metric-card">
+
+                    <span class="metric-label">
+                        TEMPERATURE CHANGE
+                    </span>
+
+                    <strong id="metricTemperature">
+                        +0.0°C
+                    </strong>
+
+                </div>
+
+                <div class="metric-card">
+
+                    <span class="metric-label">
+                        SEA LEVEL
+                    </span>
+
+                    <strong id="metricSeaLevel">
+                        0.0 m
+                    </strong>
+
+                </div>
+
+                <div class="metric-card">
+
+                    <span class="metric-label">
+                        RAINFALL
+                    </span>
+
+                    <strong id="metricRainfall">
+                        100%
+                    </strong>
+
+                </div>
+
+                <div class="metric-card">
+
+                    <span class="metric-label">
+                        FOREST
+                    </span>
+
+                    <strong id="metricForest">
+                        100%
+                    </strong>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <!-- =========================================================
+         INTELLIGENCE DASHBOARD
+    ========================================================== -->
+
+    <section class="intelligence-panel">
+
+        <div class="intelligence-header">
+
+            <div>
+
+                <div class="eyebrow">
+                    PLANETARY INTELLIGENCE
+                </div>
+
+                <h2>
+                    Consequence Analysis
+                </h2>
+
+                <p>
+                    The engine evaluates interactions between
+                    the simulation variables.
+                </p>
+
+            </div>
+
+            <div
+                id="riskBadge"
+                class="risk-badge"
+            >
+                LOW RISK
+            </div>
+
+        </div>
+
+
+        <div class="intelligence-grid">
+
+
+            <!-- CLIMATE -->
+
+            <article class="intelligence-card">
+
+                <div class="intelligence-card-top">
+
+                    <span>
+                        CLIMATE RISK
+                    </span>
+
+                    <strong id="climateRiskValue">
+                        0%
+                    </strong>
+
+                </div>
+
+                <div class="progress-track">
+
+                    <div
+                        id="climateRiskBar"
+                        class="progress-fill"
+                    ></div>
+
+                </div>
+
+                <p id="climateRiskText">
+                    Climate conditions are stable.
+                </p>
+
+            </article>
+
+
+            <!-- FLOOD -->
+
+            <article class="intelligence-card">
+
+                <div class="intelligence-card-top">
+
+                    <span>
+                        FLOOD RISK
+                    </span>
+
+                    <strong id="floodRiskValue">
+                        0%
+                    </strong>
+
+                </div>
+
+                <div class="progress-track">
+
+                    <div
+                        id="floodRiskBar"
+                        class="progress-fill"
+                    ></div>
+
+                </div>
+
+                <p id="floodRiskText">
+                    Sea-level conditions are stable.
+                </p>
+
+            </article>
+
+
+            <!-- DROUGHT -->
+
+            <article class="intelligence-card">
+
+                <div class="intelligence-card-top">
+
+                    <span>
+                        DROUGHT RISK
+                    </span>
+
+                    <strong id="droughtRiskValue">
+                        0%
+                    </strong>
+
+                </div>
+
+                <div class="progress-track">
+
+                    <div
+                        id="droughtRiskBar"
+                        class="progress-fill"
+                    ></div>
+
+                </div>
+
+                <p id="droughtRiskText">
+                    Rainfall conditions are stable.
+                </p>
+
+            </article>
+
+
+            <!-- WATER -->
+
+            <article class="intelligence-card">
+
+                <div class="intelligence-card-top">
+
+                    <span>
+                        WATER STRESS
+                    </span>
+
+                    <strong id="waterStressValue">
+                        0%
+                    </strong>
+
+                </div>
+
+                <div class="progress-track">
+
+                    <div
+                        id="waterStressBar"
+                        class="progress-fill"
+                    ></div>
+
+                </div>
+
+                <p id="waterStressText">
+                    Global water stress is low.
+                </p>
+
+            </article>
+
+
+            <!-- ECOSYSTEM -->
+
+            <article class="intelligence-card">
+
+                <div class="intelligence-card-top">
+
+                    <span>
+                        ECOSYSTEM HEALTH
+                    </span>
+
+                    <strong id="ecosystemValue">
+                        100%
+                    </strong>
+
+                </div>
+
+                <div class="progress-track">
+
+                    <div
+                        id="ecosystemBar"
+                        class="progress-fill positive"
+                    ></div>
+
+                </div>
+
+                <p id="ecosystemText">
+                    Ecosystems are highly resilient.
+                </p>
+
+            </article>
+
+
+            <!-- HUMAN PRESSURE -->
+
+            <article class="intelligence-card">
+
+                <div class="intelligence-card-top">
+
+                    <span>
+                        HUMAN PRESSURE
+                    </span>
+
+                    <strong id="humanPressureValue">
+                        0%
+                    </strong>
+
+                </div>
+
+                <div class="progress-track">
+
+                    <div
+                        id="humanPressureBar"
+                        class="progress-fill"
+                    ></div>
+
+                </div>
+
+                <p id="humanPressureText">
+                    Human pressure is currently moderate.
+                </p>
+
+            </article>
+
+        </div>
+
+
+        <!-- CONSEQUENCE -->
+
+        <div class="consequence-panel">
+
+            <div class="consequence-icon">
+                ◈
+            </div>
+
+            <div>
+
+                <span class="eyebrow">
+                    SIMULATION SUMMARY
+                </span>
+
+                <p id="consequenceText">
+                    Earth is currently operating close to
+                    the baseline simulation state.
+                </p>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- =========================================================
+         TIMELINE
+    ========================================================== -->
+
+    <section class="timeline-section">
+
+        <div class="timeline-header">
+
+            <div>
+
+                <div class="eyebrow">
+                    TEMPORAL SIMULATION
+                </div>
+
+                <h2>
+                    Earth Through Time
+                </h2>
+
+            </div>
+
+            <span id="timelineStatus">
+                2026
+            </span>
+
+        </div>
+
+
+        <div class="timeline">
+
+            <div class="timeline-line"></div>
+
+            <button
+                class="timeline-point active"
+                data-year="2026"
+            >
+                <span>2026</span>
+            </button>
+
+            <button
+                class="timeline-point"
+                data-year="2040"
+            >
+                <span>2040</span>
+            </button>
+
+            <button
+                class="timeline-point"
+                data-year="2060"
+            >
+                <span>2060</span>
+            </button>
+
+            <button
+                class="timeline-point"
+                data-year="2080"
+            >
+                <span>2080</span>
+            </button>
+
+            <button
+                class="timeline-point"
+                data-year="2100"
+            >
+                <span>2100</span>
+            </button>
+
+        </div>
+
+    </section>
+
+
+    <!-- =========================================================
+         FOOTER
+    ========================================================== -->
+
+    <footer class="footer">
+
+        <span>
+            WHAT IF EARTH
+        </span>
+
+        <span>
+            HYPOTHETICAL SIMULATION • NOT A CLIMATE PREDICTION
+        </span>
+
+    </footer>
+
+
+    <script src="script.js"></script>
+
+</body>
+</html>
