@@ -5,9 +5,10 @@
 
 "use strict";
 
-/* ------------------------------------------------------------
+
+/* ============================================================
    SIMULATION STATE
------------------------------------------------------------- */
+   ============================================================ */
 
 const state = {
     year: 2026,
@@ -32,15 +33,17 @@ const state = {
     simulationSeconds: 0
 };
 
-/* ------------------------------------------------------------
+
+/* ============================================================
    DOM HELPER
------------------------------------------------------------- */
+   ============================================================ */
 
 const $ = (id) => document.getElementById(id);
 
-/* ------------------------------------------------------------
+
+/* ============================================================
    CONTROLS
------------------------------------------------------------- */
+   ============================================================ */
 
 const temperatureControl = $("temperature");
 const seaLevelControl = $("seaLevel");
@@ -56,31 +59,38 @@ const forestValue = $("forestValue");
 const populationValue = $("populationValue");
 const cleanEnergyValue = $("cleanEnergyValue");
 
+
+/* ============================================================
+   BUTTONS
+   ============================================================ */
+
 const runButton = $("runSimulation");
 const resetButton = $("resetSimulation");
 
-/* ------------------------------------------------------------
-   SIMULATION STATUS
------------------------------------------------------------- */
+
+/* ============================================================
+   STATUS
+   ============================================================ */
 
 const simulationStateElement = $("simulationState");
-const simulationYearElement = $("simulationYear");
+const simulationYearElement = $("currentYear");
 const simulationClockElement = $("simulationClock");
+const timelineStatus = $("timelineStatus");
 
-/* ------------------------------------------------------------
-   BASIC METRICS
------------------------------------------------------------- */
+
+/* ============================================================
+   METRICS
+   ============================================================ */
 
 const temperatureMetric = $("metricTemperature");
 const seaLevelMetric = $("metricSeaLevel");
 const rainfallMetric = $("metricRainfall");
 const forestMetric = $("metricForest");
-const populationMetric = $("metricPopulation");
-const cleanEnergyMetric = $("metricCleanEnergy");
 
-/* ------------------------------------------------------------
-   RISK DASHBOARD
------------------------------------------------------------- */
+
+/* ============================================================
+   INTELLIGENCE
+   ============================================================ */
 
 const climateRiskValue = $("climateRiskValue");
 const climateRiskBar = $("climateRiskBar");
@@ -109,12 +119,10 @@ const humanPressureText = $("humanPressureText");
 const riskBadge = $("riskBadge");
 const consequenceText = $("consequenceText");
 
+
 /* ============================================================
    GLOBE
    ============================================================ */
-
-let d3Ready = typeof window.d3 !== "undefined";
-let topojsonReady = typeof window.topojson !== "undefined";
 
 let globeSvg = null;
 let landLayer = null;
@@ -124,69 +132,194 @@ let cityLayer = null;
 
 let projection = null;
 let path = null;
-let countries = null;
 
-let globeRotation = [0, -15, 0];
+const GLOBE_CENTER = 350;
+const GLOBE_RADIUS = 270;
+
 let globeScale = 1;
 
-/* ------------------------------------------------------------
-   SETUP GLOBE
------------------------------------------------------------- */
+
+/* ============================================================
+   CITY DATA
+   ============================================================ */
+
+const cities = [
+    {
+        name: "New York",
+        lat: 40.7128,
+        lon: -74.0060
+    },
+    {
+        name: "London",
+        lat: 51.5072,
+        lon: -0.1276
+    },
+    {
+        name: "Delhi",
+        lat: 28.6139,
+        lon: 77.2090
+    },
+    {
+        name: "Tokyo",
+        lat: 35.6762,
+        lon: 139.6503
+    },
+    {
+        name: "Sydney",
+        lat: -33.8688,
+        lon: 151.2093
+    },
+    {
+        name: "São Paulo",
+        lat: -23.5505,
+        lon: -46.6333
+    },
+    {
+        name: "Cairo",
+        lat: 30.0444,
+        lon: 31.2357
+    },
+    {
+        name: "Singapore",
+        lat: 1.3521,
+        lon: 103.8198
+    }
+];
+
+
+/* ============================================================
+   UTILITY
+   ============================================================ */
+
+function clamp(value, min = 0, max = 100) {
+    return Math.max(
+        min,
+        Math.min(max, value)
+    );
+}
+
+
+/* ============================================================
+   GLOBE INITIALIZATION
+   ============================================================ */
 
 function setupGlobe() {
 
-    if (!d3Ready) {
-        console.error("D3 is not available.");
+    if (typeof window.d3 === "undefined") {
+        console.error(
+            "D3 is not loaded."
+        );
         return;
     }
 
-    globeSvg = d3.select("#earthGlobe");
+    globeSvg =
+        window.d3.select(
+            "#earthGlobe"
+        );
 
     if (globeSvg.empty()) {
-        console.error("Could not find #earthGlobe.");
+        console.error(
+            "#earthGlobe was not found."
+        );
         return;
     }
 
-    landLayer = d3.select("#landLayer");
-    graticuleLayer = d3.select("#graticuleLayer");
-    climateLayer = d3.select("#climateLayer");
-    cityLayer = d3.select("#cityLayer");
+    landLayer =
+        window.d3.select(
+            "#landLayer"
+        );
 
-    projection = d3.geoOrthographic()
-        .scale(300)
-        .translate([350, 350])
-        .clipAngle(90)
-        .rotate(globeRotation);
+    graticuleLayer =
+        window.d3.select(
+            "#graticuleLayer"
+        );
 
-    path = d3.geoPath(projection);
+    climateLayer =
+        window.d3.select(
+            "#climateLayer"
+        );
+
+    cityLayer =
+        window.d3.select(
+            "#cityLayer"
+        );
+
+
+    /*
+       IMPORTANT:
+       The HTML globe radius is 270px,
+       so the D3 globe uses the same radius.
+    */
+
+    projection =
+        window.d3
+            .geoOrthographic()
+            .scale(
+                GLOBE_RADIUS
+            )
+            .translate([
+                GLOBE_CENTER,
+                GLOBE_CENTER
+            ])
+            .clipAngle(90)
+            .rotate([
+                0,
+                -15,
+                0
+            ]);
+
+
+    path =
+        window.d3.geoPath(
+            projection
+        );
+
 
     drawGlobeBase();
+
     setupGlobeInteraction();
 }
 
-/* ------------------------------------------------------------
-   BASE GLOBE
------------------------------------------------------------- */
+
+/* ============================================================
+   GLOBE BASE
+   ============================================================ */
 
 function drawGlobeBase() {
 
-    if (!projection || !globeSvg) {
+    if (
+        !globeSvg ||
+        !projection
+    ) {
         return;
     }
 
-    globeSvg
-        .selectAll(".ocean-sphere")
-        .remove();
+
+    /*
+       Do not create another ocean sphere.
+
+       The HTML already contains:
+       .globe-ocean
+
+       We simply keep it synchronized
+       with the D3 projection.
+    */
 
     globeSvg
-        .insert("circle", ":first-child")
-        .attr("class", "ocean-sphere")
-        .attr("cx", 350)
-        .attr("cy", 350)
-        .attr("r", projection.scale())
-        .attr("fill", "#071722")
-        .attr("stroke", "rgba(85,229,255,.45)")
-        .attr("stroke-width", 2);
+        .select(".globe-ocean")
+        .attr(
+            "cx",
+            GLOBE_CENTER
+        )
+        .attr(
+            "cy",
+            GLOBE_CENTER
+        )
+        .attr(
+            "r",
+            GLOBE_RADIUS
+        );
+
 
     if (graticuleLayer) {
 
@@ -194,91 +327,129 @@ function drawGlobeBase() {
             .selectAll("*")
             .remove();
 
-        const graticule = d3.geoGraticule();
+        const graticule =
+            window.d3.geoGraticule();
 
         graticuleLayer
             .append("path")
-            .datum(graticule())
-            .attr("class", "graticule")
-            .attr("d", path);
+            .datum(
+                graticule()
+            )
+            .attr(
+                "class",
+                "graticule"
+            )
+            .attr(
+                "d",
+                path
+            );
     }
 }
 
-/* ------------------------------------------------------------
+
+/* ============================================================
    GLOBE INTERACTION
------------------------------------------------------------- */
+   ============================================================ */
 
 function setupGlobeInteraction() {
 
-    if (!globeSvg || !projection || !path) {
+    if (
+        !globeSvg ||
+        !projection
+    ) {
         return;
     }
 
-    const dragBehavior = d3.drag()
 
-        .on("start", function () {
+    const dragBehavior =
+        window.d3
+            .drag()
+            .on(
+                "start",
+                function () {
 
-            globeSvg.style(
-                "cursor",
-                "grabbing"
+                    globeSvg.style(
+                        "cursor",
+                        "grabbing"
+                    );
+                }
+            )
+            .on(
+                "drag",
+                function (event) {
+
+                    const rotation =
+                        projection.rotate();
+
+                    const sensitivity =
+                        0.45;
+
+
+                    projection.rotate([
+                        rotation[0] +
+                            event.dx *
+                            sensitivity,
+
+                        rotation[1] -
+                            event.dy *
+                            sensitivity,
+
+                        rotation[2]
+                    ]);
+
+
+                    redrawGlobe();
+                }
+            )
+            .on(
+                "end",
+                function () {
+
+                    globeSvg.style(
+                        "cursor",
+                        "grab"
+                    );
+                }
             );
 
-        })
 
-        .on("drag", function (event) {
-
-            const rotate = projection.rotate();
-
-            const sensitivity = 0.45;
-
-            projection.rotate([
-                rotate[0] + event.dx * sensitivity,
-                rotate[1] - event.dy * sensitivity,
-                rotate[2]
-            ]);
-
-            globeRotation = projection.rotate();
-
-            redrawGlobe();
-
-        })
-
-        .on("end", function () {
-
-            globeSvg.style(
-                "cursor",
-                "grab"
-            );
-
-        });
-
-    globeSvg.call(dragBehavior);
-
-    const zoomBehavior = d3.zoom()
-
-        .scaleExtent([
-            0.82,
-            1.35
-        ])
-
-        .on("zoom", function (event) {
-
-            globeScale = event.transform.k;
-
-            projection.scale(
-                300 * globeScale
-            );
-
-            redrawGlobe();
-
-        });
-
-    globeSvg.call(zoomBehavior);
-
-    globeSvg.on(
-        "wheel.zoom",
-        null
+    globeSvg.call(
+        dragBehavior
     );
+
+
+    /*
+       Zoom using wheel.
+    */
+
+    const zoomBehavior =
+        window.d3
+            .zoom()
+            .scaleExtent([
+                0.85,
+                1.35
+            ])
+            .on(
+                "zoom",
+                function (event) {
+
+                    globeScale =
+                        event.transform.k;
+
+                    projection.scale(
+                        GLOBE_RADIUS *
+                        globeScale
+                    );
+
+                    redrawGlobe();
+                }
+            );
+
+
+    globeSvg.call(
+        zoomBehavior
+    );
+
 
     globeSvg.style(
         "cursor",
@@ -286,105 +457,105 @@ function setupGlobeInteraction() {
     );
 }
 
-/* ------------------------------------------------------------
+
+/* ============================================================
    REDRAW GLOBE
------------------------------------------------------------- */
+   ============================================================ */
 
 function redrawGlobe() {
 
-    if (!path) {
+    if (
+        !projection ||
+        !path
+    ) {
         return;
     }
+
 
     if (graticuleLayer) {
 
         graticuleLayer
             .selectAll("path")
-            .attr("d", path);
-
+            .attr(
+                "d",
+                path
+            );
     }
+
 
     if (landLayer) {
 
         landLayer
             .selectAll("path")
-            .attr("d", path);
-
+            .attr(
+                "d",
+                path
+            );
     }
+
 
     if (climateLayer) {
 
         climateLayer
             .selectAll("path")
-            .attr("d", path);
-
-    }
-
-    if (cityLayer) {
-
-        cityLayer
-            .selectAll("circle")
             .attr(
-                "transform",
-                (d) => {
-
-                    const point =
-                        projection([
-                            d.lon,
-                            d.lat
-                        ]);
-
-                    if (!point) {
-                        return "translate(-100,-100)";
-                    }
-
-                    return `translate(${point[0]},${point[1]})`;
-                }
+                "d",
+                path
             );
     }
 
-    globeSvg
-        .select(".ocean-sphere")
-        .attr(
-            "r",
-            projection.scale()
-        );
+
+    updateCityVisibility();
 }
 
+
 /* ============================================================
-   COUNTRY DATA
-============================================================ */
+   COUNTRY RENDERING
+   ============================================================ */
 
 function drawCountries(worldData) {
 
     if (
-        !d3Ready ||
-        !topojsonReady ||
+        typeof window.d3 === "undefined" ||
+        typeof window.topojson === "undefined" ||
         !landLayer
     ) {
         return;
     }
 
+
     try {
 
+        const objects =
+            worldData.objects || {};
+
+
         const objectName =
-            worldData.objects.countries
+            objects.countries
                 ? "countries"
                 : Object.keys(
-                    worldData.objects
+                    objects
                 )[0];
 
-        countries =
-            topojson.feature(
-                worldData,
-                worldData.objects[
-                    objectName
-                ]
+
+        if (!objectName) {
+            throw new Error(
+                "No country object found."
             );
+        }
+
+
+        const countries =
+            window.topojson.feature(
+                worldData,
+                objects[objectName]
+            );
+
 
         landLayer
             .selectAll("*")
             .remove();
+
 
         landLayer
             .selectAll("path")
@@ -406,12 +577,14 @@ function drawCountries(worldData) {
                 "non-scaling-stroke"
             );
 
+
         redrawGlobe();
+
 
     } catch (error) {
 
         console.error(
-            "Country rendering failed:",
+            "Country rendering error:",
             error
         );
 
@@ -419,25 +592,26 @@ function drawCountries(worldData) {
     }
 }
 
-/* ------------------------------------------------------------
-   FALLBACK LAND
------------------------------------------------------------- */
+
+/* ============================================================
+   FALLBACK CONTINENTS
+   ============================================================ */
 
 function drawFallbackLand() {
 
-    if (!landLayer || !d3Ready) {
+    if (
+        !landLayer ||
+        !projection ||
+        typeof window.d3 === "undefined"
+    ) {
         return;
     }
 
-    landLayer
-        .selectAll("*")
-        .remove();
 
-    const fallbackContinents = [
+    const continents = [
 
         {
             name: "North America",
-
             coordinates: [
                 [-168, 72],
                 [-140, 70],
@@ -455,7 +629,6 @@ function drawFallbackLand() {
 
         {
             name: "South America",
-
             coordinates: [
                 [-80, 10],
                 [-60, 10],
@@ -469,7 +642,6 @@ function drawFallbackLand() {
 
         {
             name: "Europe",
-
             coordinates: [
                 [-10, 36],
                 [10, 35],
@@ -483,7 +655,6 @@ function drawFallbackLand() {
 
         {
             name: "Africa",
-
             coordinates: [
                 [-18, 35],
                 [15, 37],
@@ -498,7 +669,6 @@ function drawFallbackLand() {
 
         {
             name: "Asia",
-
             coordinates: [
                 [30, 40],
                 [55, 60],
@@ -514,7 +684,6 @@ function drawFallbackLand() {
 
         {
             name: "Australia",
-
             coordinates: [
                 [112, -10],
                 [153, -12],
@@ -525,9 +694,17 @@ function drawFallbackLand() {
         }
     ];
 
+
+    landLayer
+        .selectAll("*")
+        .remove();
+
+
     landLayer
         .selectAll("path")
-        .data(fallbackContinents)
+        .data(
+            continents
+        )
         .enter()
         .append("path")
         .attr(
@@ -536,75 +713,121 @@ function drawFallbackLand() {
         )
         .attr(
             "d",
-            d => {
+            function (d) {
 
                 const points =
                     d.coordinates
                         .map(
-                            coord =>
-                                projection(coord)
+                            coordinate =>
+                                projection(
+                                    coordinate
+                                )
                         )
                         .filter(Boolean);
 
-                if (points.length < 3) {
+
+                if (
+                    points.length < 3
+                ) {
                     return "";
                 }
 
-                return d3.line()
+
+                return window.d3
+                    .line()
                     .curve(
-                        d3.curveLinearClosed
+                        window.d3
+                            .curveLinearClosed
                     )(points);
             }
         );
+
+
+    redrawGlobe();
 }
+
 
 /* ============================================================
    CLIMATE ZONES
-============================================================ */
+   ============================================================ */
 
 function drawClimateZones() {
 
     if (
         !climateLayer ||
-        !d3Ready
+        !projection ||
+        !path
     ) {
         return;
     }
+
 
     const zones = [
 
         {
             name: "Northern Heat",
-
-            coords: [
-                [-180, 35],
-                [180, 35],
-                [180, 90],
-                [-180, 90]
-            ],
-
             className:
-                "climate-zone heat-zone"
+                "climate-zone heat-zone",
+
+            polygon: [
+                [
+                    -180,
+                    35
+                ],
+                [
+                    180,
+                    35
+                ],
+                [
+                    180,
+                    90
+                ],
+                [
+                    -180,
+                    90
+                ],
+                [
+                    -180,
+                    35
+                ]
+            ]
         },
 
         {
             name: "Southern Heat",
-
-            coords: [
-                [-180, -90],
-                [180, -90],
-                [180, -35],
-                [-180, -35]
-            ],
-
             className:
-                "climate-zone heat-zone"
+                "climate-zone heat-zone",
+
+            polygon: [
+                [
+                    -180,
+                    -90
+                ],
+                [
+                    180,
+                    -90
+                ],
+                [
+                    180,
+                    -35
+                ],
+                [
+                    -180,
+                    -35
+                ],
+                [
+                    -180,
+                    -90
+                ]
+            ]
         }
     ];
+
 
     climateLayer
         .selectAll("*")
         .remove();
+
 
     climateLayer
         .selectAll("path")
@@ -617,84 +840,23 @@ function drawClimateZones() {
         )
         .attr(
             "d",
-            d => {
-
-                const points =
-                    d.coords
-                        .map(
-                            coord =>
-                                projection(coord)
-                        )
-                        .filter(Boolean);
-
-                if (points.length < 3) {
-                    return "";
-                }
-
-                return d3.line()
-                    .curve(
-                        d3.curveLinearClosed
-                    )(points);
-            }
+            d =>
+                path({
+                    type: "Polygon",
+                    coordinates: [
+                        d.polygon
+                    ]
+                })
         );
+
 
     redrawGlobe();
 }
 
+
 /* ============================================================
    CITIES
-============================================================ */
-
-const cities = [
-
-    {
-        name: "New York",
-        lat: 40.7128,
-        lon: -74.0060
-    },
-
-    {
-        name: "London",
-        lat: 51.5072,
-        lon: -0.1276
-    },
-
-    {
-        name: "Delhi",
-        lat: 28.6139,
-        lon: 77.2090
-    },
-
-    {
-        name: "Tokyo",
-        lat: 35.6762,
-        lon: 139.6503
-    },
-
-    {
-        name: "Sydney",
-        lat: -33.8688,
-        lon: 151.2093
-    },
-
-    {
-        name: "São Paulo",
-        lat: -23.5505,
-        lon: -46.6333
-    },
-
-    {
-        name: "Cairo",
-        lat: 30.0444,
-        lon: 31.2357
-    },
-
-    {
-        name: "Singapore",
-        lat: 1.3521,
-        lon: 103.8198
-    }
-];
+   ============================================================ */
 
 function drawCities() {
 
@@ -705,9 +867,11 @@ function drawCities() {
         return;
     }
 
+
     cityLayer
         .selectAll("*")
         .remove();
+
 
     cityLayer
         .selectAll("circle")
@@ -722,9 +886,66 @@ function drawCities() {
             "r",
             3.5
         )
-        .attr(
-            "transform",
-            d => {
+        .each(
+            function (d) {
+
+                window.d3
+                    .select(this)
+                    .append("title")
+                    .text(
+                        d.name
+                    );
+            }
+        );
+
+
+    updateCityVisibility();
+}
+
+
+/* ============================================================
+   CITY VISIBILITY
+   ============================================================ */
+
+function updateCityVisibility() {
+
+    if (
+        !cityLayer ||
+        !projection
+    ) {
+        return;
+    }
+
+
+    const rotation =
+        projection.rotate();
+
+
+    const center = [
+        -rotation[0],
+        -rotation[1]
+    ];
+
+
+    cityLayer
+        .selectAll("circle")
+        .each(
+            function (d) {
+
+                const distance =
+                    window.d3.geoDistance(
+                        [
+                            d.lon,
+                            d.lat
+                        ],
+                        center
+                    );
+
+
+                const visible =
+                    distance <=
+                    Math.PI / 2;
+
 
                 const point =
                     projection([
@@ -732,38 +953,59 @@ function drawCities() {
                         d.lat
                     ]);
 
+
+                const circle =
+                    window.d3.select(
+                        this
+                    );
+
+
                 if (!point) {
-                    return "translate(-100,-100)";
+
+                    circle.style(
+                        "display",
+                        "none"
+                    );
+
+                    return;
                 }
 
-                return `translate(${point[0]},${point[1]})`;
-            }
-        );
 
-    cityLayer
-        .selectAll("circle")
-        .append("title")
-        .text(
-            d => d.name
+                circle
+                    .style(
+                        "display",
+                        visible
+                            ? null
+                            : "none"
+                    )
+                    .attr(
+                        "transform",
+                        `translate(${point[0]},${point[1]})`
+                    );
+            }
         );
 }
 
+
 /* ============================================================
    LOAD EARTH
-============================================================ */
+   ============================================================ */
 
 async function loadEarth() {
 
-    if (!d3Ready) {
-
+    if (
+        typeof window.d3 === "undefined"
+    ) {
         console.error(
             "D3 failed to load."
         );
-
         return;
     }
 
-    if (!topojsonReady) {
+
+    if (
+        typeof window.topojson === "undefined"
+    ) {
 
         console.error(
             "TopoJSON failed to load."
@@ -776,15 +1018,17 @@ async function loadEarth() {
         return;
     }
 
+
     try {
 
         const response =
             await fetch(
-                "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json",
+                "https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/countries-110m.json",
                 {
                     cache: "force-cache"
                 }
             );
+
 
         if (!response.ok) {
 
@@ -793,15 +1037,19 @@ async function loadEarth() {
             );
         }
 
+
         const worldData =
             await response.json();
+
 
         drawCountries(
             worldData
         );
 
         drawClimateZones();
+
         drawCities();
+
 
     } catch (error) {
 
@@ -810,16 +1058,21 @@ async function loadEarth() {
             error
         );
 
+
         drawFallbackLand();
+
         drawClimateZones();
+
         drawCities();
+
         redrawGlobe();
     }
 }
 
+
 /* ============================================================
    READ CONTROLS
-============================================================ */
+   ============================================================ */
 
 function readControls() {
 
@@ -854,9 +1107,10 @@ function readControls() {
         );
 }
 
+
 /* ============================================================
    CONTROL LABELS
-============================================================ */
+   ============================================================ */
 
 function updateControlLabels() {
 
@@ -871,11 +1125,13 @@ function updateControlLabels() {
             `${sign}${state.temperature.toFixed(1)} °C`;
     }
 
+
     if (seaLevelValue) {
 
         seaLevelValue.textContent =
             `${state.seaLevel.toFixed(1)} m`;
     }
+
 
     if (rainfallValue) {
 
@@ -883,17 +1139,20 @@ function updateControlLabels() {
             `${Math.round(state.rainfall)}%`;
     }
 
+
     if (forestValue) {
 
         forestValue.textContent =
             `${Math.round(state.forest)}%`;
     }
 
+
     if (populationValue) {
 
         populationValue.textContent =
             `${state.population.toFixed(1)}B`;
     }
+
 
     if (cleanEnergyValue) {
 
@@ -902,22 +1161,22 @@ function updateControlLabels() {
     }
 }
 
+
 /* ============================================================
    CONTROL LISTENERS
-============================================================ */
+   ============================================================ */
 
 function attachControlListeners() {
 
     const controls = [
-
         temperatureControl,
         seaLevelControl,
         rainfallControl,
         forestControl,
         populationControl,
         cleanEnergyControl
-
     ];
+
 
     controls.forEach(
         control => {
@@ -926,39 +1185,26 @@ function attachControlListeners() {
                 return;
             }
 
+
             control.addEventListener(
                 "input",
-                () => {
+                function () {
 
                     readControls();
-                    calculateSimulation();
-                    render();
 
+                    calculateSimulation();
+
+                    render();
                 }
             );
         }
     );
 }
 
-/* ============================================================
-   UTILITY
-============================================================ */
-
-function clamp(
-    value,
-    min = 0,
-    max = 100
-) {
-
-    return Math.max(
-        min,
-        Math.min(max, value)
-    );
-}
 
 /* ============================================================
-   SIMULATION CALCULATION
-============================================================ */
+   SIMULATION ENGINE
+   ============================================================ */
 
 function calculateSimulation() {
 
@@ -967,40 +1213,48 @@ function calculateSimulation() {
             (state.temperature + 1) * 11
         );
 
+
     const seaRisk =
         clamp(
             state.seaLevel * 17
         );
+
 
     const rainfallDeviation =
         Math.abs(
             state.rainfall - 100
         );
 
+
     const rainfallRisk =
         clamp(
             rainfallDeviation * 0.7
         );
+
 
     const forestLoss =
         clamp(
             100 - state.forest
         );
 
+
     const forestRisk =
         clamp(
             forestLoss * 0.8
         );
+
 
     const populationRisk =
         clamp(
             (state.population - 8.2) * 7.5
         );
 
+
     const cleanEnergyBenefit =
         clamp(
             state.cleanEnergy * 0.42
         );
+
 
     state.climateRisk =
         clamp(
@@ -1011,6 +1265,7 @@ function calculateSimulation() {
             populationRisk * 0.10 -
             cleanEnergyBenefit * 0.28
         );
+
 
     state.floodRisk =
         clamp(
@@ -1024,6 +1279,7 @@ function calculateSimulation() {
                 state.temperature
             ) * 5
         );
+
 
     state.droughtRisk =
         clamp(
@@ -1041,6 +1297,7 @@ function calculateSimulation() {
             ) * 0.20
         );
 
+
     state.waterStress =
         clamp(
             state.droughtRisk * 0.62 +
@@ -1050,6 +1307,7 @@ function calculateSimulation() {
                 state.population - 8.2
             ) * 5
         );
+
 
     state.humanPressure =
         clamp(
@@ -1067,6 +1325,7 @@ function calculateSimulation() {
             ) * 0.22
         );
 
+
     state.energyPressure =
         clamp(
             Math.max(
@@ -1079,6 +1338,7 @@ function calculateSimulation() {
             ) * 4
         );
 
+
     state.ecosystemHealth =
         clamp(
             100 -
@@ -1089,9 +1349,10 @@ function calculateSimulation() {
         );
 }
 
+
 /* ============================================================
    RISK LABEL
-============================================================ */
+   ============================================================ */
 
 function riskLabel(value) {
 
@@ -1114,9 +1375,10 @@ function riskLabel(value) {
     return "CRITICAL";
 }
 
+
 /* ============================================================
    ECOSYSTEM LABEL
-============================================================ */
+   ============================================================ */
 
 function ecosystemTextLabel(value) {
 
@@ -1139,13 +1401,15 @@ function ecosystemTextLabel(value) {
     return "Extreme ecosystem disruption";
 }
 
+
 /* ============================================================
    CONSEQUENCES
-============================================================ */
+   ============================================================ */
 
 function consequenceSummary() {
 
     const consequences = [];
+
 
     if (state.temperature >= 2) {
 
@@ -1154,12 +1418,14 @@ function consequenceSummary() {
         );
     }
 
+
     if (state.seaLevel >= 1) {
 
         consequences.push(
             "Rising sea level increases exposure for coastal communities and low-lying regions."
         );
     }
+
 
     if (state.rainfall < 85) {
 
@@ -1168,12 +1434,14 @@ function consequenceSummary() {
         );
     }
 
+
     if (state.rainfall > 115) {
 
         consequences.push(
             "Higher rainfall increases the potential for flooding and extreme precipitation."
         );
     }
+
 
     if (state.forest < 75) {
 
@@ -1182,12 +1450,14 @@ function consequenceSummary() {
         );
     }
 
+
     if (state.population > 10) {
 
         consequences.push(
             "Higher population increases demand for food, water, energy and land."
         );
     }
+
 
     if (state.cleanEnergy >= 70) {
 
@@ -1196,6 +1466,7 @@ function consequenceSummary() {
         );
     }
 
+
     if (consequences.length === 0) {
 
         consequences.push(
@@ -1203,12 +1474,14 @@ function consequenceSummary() {
         );
     }
 
+
     return consequences.join(" ");
 }
 
+
 /* ============================================================
-   BAR
-============================================================ */
+   PROGRESS BAR
+   ============================================================ */
 
 function setBar(
     element,
@@ -1219,13 +1492,15 @@ function setBar(
         return;
     }
 
+
     element.style.width =
         `${clamp(value)}%`;
 }
 
+
 /* ============================================================
    RISK CARD
-============================================================ */
+   ============================================================ */
 
 function setRiskCard(
     valueElement,
@@ -1239,31 +1514,40 @@ function setRiskCard(
             clamp(value)
         );
 
+
     if (valueElement) {
 
         valueElement.textContent =
             `${rounded}%`;
     }
 
+
     setBar(
         barElement,
         rounded
     );
 
+
     if (textElement) {
 
         textElement.textContent =
-            riskLabel(rounded);
+            riskLabel(
+                rounded
+            );
     }
 }
 
+
 /* ============================================================
-   RENDER
-============================================================ */
+   RENDER UI
+   ============================================================ */
 
 function render() {
 
     updateControlLabels();
+
+
+    /* Metrics */
 
     if (temperatureMetric) {
 
@@ -1276,11 +1560,13 @@ function render() {
             `${sign}${state.temperature.toFixed(1)} °C`;
     }
 
+
     if (seaLevelMetric) {
 
         seaLevelMetric.textContent =
             `${state.seaLevel.toFixed(1)} m`;
     }
+
 
     if (rainfallMetric) {
 
@@ -1288,23 +1574,15 @@ function render() {
             `${Math.round(state.rainfall)}%`;
     }
 
+
     if (forestMetric) {
 
         forestMetric.textContent =
             `${Math.round(state.forest)}%`;
     }
 
-    if (populationMetric) {
 
-        populationMetric.textContent =
-            `${state.population.toFixed(1)}B`;
-    }
-
-    if (cleanEnergyMetric) {
-
-        cleanEnergyMetric.textContent =
-            `${Math.round(state.cleanEnergy)}%`;
-    }
+    /* Intelligence */
 
     setRiskCard(
         climateRiskValue,
@@ -1313,12 +1591,14 @@ function render() {
         state.climateRisk
     );
 
+
     setRiskCard(
         floodRiskValue,
         floodRiskBar,
         floodRiskText,
         state.floodRisk
     );
+
 
     setRiskCard(
         droughtRiskValue,
@@ -1327,6 +1607,7 @@ function render() {
         state.droughtRisk
     );
 
+
     setRiskCard(
         waterStressValue,
         waterStressBar,
@@ -1334,10 +1615,14 @@ function render() {
         state.waterStress
     );
 
+
+    /* Ecosystem */
+
     const ecosystem =
         Math.round(
             state.ecosystemHealth
         );
+
 
     if (ecosystemValue) {
 
@@ -1345,10 +1630,17 @@ function render() {
             `${ecosystem}%`;
     }
 
+
+    /*
+       This is HEALTH, so the bar
+       represents remaining health.
+    */
+
     setBar(
         ecosystemBar,
-        100 - ecosystem
+        ecosystem
     );
+
 
     if (ecosystemTextElement) {
 
@@ -1358,12 +1650,18 @@ function render() {
             );
     }
 
+
+    /* Human pressure */
+
     setRiskCard(
         humanPressureValue,
         humanPressureBar,
         humanPressureText,
         state.humanPressure
     );
+
+
+    /* Overall risk */
 
     if (riskBadge) {
 
@@ -1375,16 +1673,23 @@ function render() {
                 state.waterStress
             );
 
-        riskBadge.textContent =
+
+        const label =
             riskLabel(
                 overallRisk
             );
 
+
+        riskBadge.textContent =
+            `${label} RISK`;
+
+
         riskBadge.dataset.level =
-            riskLabel(
-                overallRisk
-            ).toLowerCase();
+            label.toLowerCase();
     }
+
+
+    /* Summary */
 
     if (consequenceText) {
 
@@ -1392,11 +1697,43 @@ function render() {
             consequenceSummary();
     }
 
+
+    /* Current year */
+
     if (simulationYearElement) {
 
         simulationYearElement.textContent =
             state.year;
     }
+
+
+    /* Timeline */
+
+    if (timelineStatus) {
+
+        timelineStatus.textContent =
+            state.year;
+    }
+
+
+    document
+        .querySelectorAll(
+            "[data-year]"
+        )
+        .forEach(
+            button => {
+
+                button.classList.toggle(
+                    "active",
+                    Number(
+                        button.dataset.year
+                    ) === state.year
+                );
+            }
+        );
+
+
+    /* Clock */
 
     if (simulationClockElement) {
 
@@ -1405,12 +1742,17 @@ function render() {
                 state.simulationSeconds / 60
             );
 
+
         const seconds =
             state.simulationSeconds % 60;
+
 
         simulationClockElement.textContent =
             `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
     }
+
+
+    /* Simulation status */
 
     if (simulationStateElement) {
 
@@ -1420,22 +1762,23 @@ function render() {
                 : "PAUSED";
     }
 
+
     updateGlobeClimate();
 }
 
+
 /* ============================================================
-   GLOBE CLIMATE
-============================================================ */
+   GLOBE CLIMATE VISUALIZATION
+   ============================================================ */
 
 function updateGlobeClimate() {
 
     if (
-        !climateLayer ||
-        !projection ||
-        !d3Ready
+        !climateLayer
     ) {
         return;
     }
+
 
     const heatStrength =
         clamp(
@@ -1445,17 +1788,21 @@ function updateGlobeClimate() {
             ) * 14
         );
 
+
     climateLayer
-        .selectAll(".heat-zone")
+        .selectAll(
+            ".heat-zone"
+        )
         .attr(
             "opacity",
             heatStrength / 100
         );
 }
 
+
 /* ============================================================
-   RUN / PAUSE
-============================================================ */
+   RUN SIMULATION
+   ============================================================ */
 
 function runSimulation() {
 
@@ -1466,13 +1813,22 @@ function runSimulation() {
         return;
     }
 
+
+    if (state.year >= 2100) {
+
+        return;
+    }
+
+
     state.running = true;
+
 
     if (runButton) {
 
-        runButton.textContent =
-            "Pause Simulation";
+        runButton.innerHTML =
+            "<span>Ⅱ</span> Pause Simulation";
     }
+
 
     if (state.interval) {
 
@@ -1481,11 +1837,18 @@ function runSimulation() {
         );
     }
 
+
     state.interval =
         setInterval(
-            () => {
+            function () {
 
                 state.simulationSeconds += 1;
+
+
+                /*
+                   One simulated year
+                   every two real seconds.
+                */
 
                 if (
                     state.simulationSeconds % 2 === 0
@@ -1494,22 +1857,26 @@ function runSimulation() {
                     advanceYear();
                 }
 
+
                 render();
 
             },
             1000
         );
 
+
     render();
 }
 
+
 /* ============================================================
    PAUSE
-============================================================ */
+   ============================================================ */
 
 function pauseSimulation() {
 
     state.running = false;
+
 
     if (state.interval) {
 
@@ -1520,18 +1887,21 @@ function pauseSimulation() {
         state.interval = null;
     }
 
+
     if (runButton) {
 
-        runButton.textContent =
-            "Run Simulation";
+        runButton.innerHTML =
+            "<span>▶</span> Run Simulation";
     }
+
 
     render();
 }
 
+
 /* ============================================================
    ADVANCE YEAR
-============================================================ */
+   ============================================================ */
 
 function advanceYear() {
 
@@ -1542,22 +1912,24 @@ function advanceYear() {
         return;
     }
 
+
     state.year += 1;
 
     calculateSimulation();
 }
 
+
 /* ============================================================
-   RESET SIMULATION
-   IMPORTANT:
-   THIS IS THE ONLY resetSimulation FUNCTION.
-============================================================ */
+   RESET
+   ============================================================ */
 
 function resetSimulation() {
 
     pauseSimulation();
 
+
     state.year = 2026;
+
 
     if (temperatureControl) {
         temperatureControl.value = "0";
@@ -1583,6 +1955,7 @@ function resetSimulation() {
         cleanEnergyControl.value = "30";
     }
 
+
     state.temperature = 0;
     state.seaLevel = 0;
     state.rainfall = 100;
@@ -1600,14 +1973,18 @@ function resetSimulation() {
 
     state.simulationSeconds = 0;
 
+
     readControls();
+
     calculateSimulation();
+
     render();
 }
 
+
 /* ============================================================
-   BUTTONS
-============================================================ */
+   BUTTON EVENTS
+   ============================================================ */
 
 function attachButtons() {
 
@@ -1619,6 +1996,7 @@ function attachButtons() {
         );
     }
 
+
     if (resetButton) {
 
         resetButton.addEventListener(
@@ -1628,9 +2006,10 @@ function attachButtons() {
     }
 }
 
+
 /* ============================================================
-   TIMELINE
-============================================================ */
+   TIMELINE EVENTS
+   ============================================================ */
 
 function attachTimeline() {
 
@@ -1643,12 +2022,13 @@ function attachTimeline() {
 
                 button.addEventListener(
                     "click",
-                    () => {
+                    function () {
 
                         const selectedYear =
                             Number(
                                 button.dataset.year
                             );
+
 
                         if (
                             Number.isFinite(
@@ -1669,23 +2049,32 @@ function attachTimeline() {
         );
 }
 
+
 /* ============================================================
    KEYBOARD
-============================================================ */
+   ============================================================ */
 
 function attachKeyboard() {
 
     document.addEventListener(
         "keydown",
-        event => {
+        function (event) {
+
+            const target =
+                event.target;
+
 
             if (
-                event.target.matches(
+                target &&
+                typeof target.matches ===
+                    "function" &&
+                target.matches(
                     "input, textarea, select"
                 )
             ) {
                 return;
             }
+
 
             if (
                 event.code === "Space"
@@ -1695,6 +2084,7 @@ function attachKeyboard() {
 
                 runSimulation();
             }
+
 
             if (
                 event.key.toLowerCase() === "r"
@@ -1706,9 +2096,10 @@ function attachKeyboard() {
     );
 }
 
+
 /* ============================================================
-   INITIALIZE
-============================================================ */
+   INITIALIZATION
+   ============================================================ */
 
 function initialize() {
 
@@ -1720,32 +2111,39 @@ function initialize() {
 
     attachKeyboard();
 
+
     readControls();
 
     calculateSimulation();
 
     render();
 
+
     setupGlobe();
 
-    if (d3Ready) {
+
+    if (
+        typeof window.d3 !== "undefined"
+    ) {
 
         loadEarth();
 
     } else {
 
         console.error(
-            "D3 is not available. Check the D3 CDN script in index.html."
+            "D3 is not available. Check index.html."
         );
     }
 }
 
+
 /* ============================================================
    START
-============================================================ */
+   ============================================================ */
 
 if (
-    document.readyState === "loading"
+    document.readyState ===
+    "loading"
 ) {
 
     document.addEventListener(

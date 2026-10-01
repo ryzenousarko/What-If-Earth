@@ -1449,3 +1449,67 @@ button {
     }
 
 }
+/* ============================================================
+   FINAL UI / GLOBE FIXES
+============================================================ */
+
+.earth-wrapper {
+    isolation: isolate;
+}
+
+.earth {
+    display: block;
+    width: min(620px, 100%);
+    height: auto;
+    aspect-ratio: 1 / 1;
+}
+
+.globe-ocean {
+    transition: r 0.2s ease;
+}
+
+.globe-atmosphere,
+.globe-ring {
+    transition: r 0.2s ease;
+}
+
+.timeline-point.active {
+    transform: scale(1.08);
+}
+
+.timeline-point.active span {
+    color: var(--cyan);
+}
+
+.primary-button:focus-visible,
+.secondary-button:focus-visible,
+.timeline-point:focus-visible,
+input[type="range"]:focus-visible {
+    outline: 2px solid var(--cyan);
+    outline-offset: 3px;
+}
+
+@media (max-width: 560px) {
+
+    .earth-wrapper {
+        min-height: 390px;
+        padding: 12px;
+    }
+
+    .earth {
+        width: min(390px, 100%);
+        height: auto;
+    }
+
+    .globe-label {
+        display: none;
+    }
+
+    .button-row {
+        grid-template-columns: 1fr;
+    }
+
+    .secondary-button {
+        width: 100%;
+    }
+}
